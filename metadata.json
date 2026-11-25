@@ -1,0 +1,6 @@
+{
+  "name": "Green Leader Presentation & Studio",
+  "description": "Clean full-screen event agenda presentation with a standalone dark-mode content management editor and live localStorage synchronization.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

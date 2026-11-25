@@ -1,0 +1,1178 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <title>Green Leader Presentation &amp; Studio</title>
+    <meta
+      name="description"
+      content="Clean full-screen event agenda presentation with a standalone dark-mode content management editor and live localStorage synchronization."
+    />
+    <meta property="og:title" content="Green Leader Presentation &amp; Studio" />
+    <meta
+      property="og:description"
+      content="Clean full-screen event agenda presentation with a standalone dark-mode content management editor and live localStorage synchronization."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@500;700;800&family=Outfit:wght@500;600;700;800&family=Playfair+Display:wght@600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="./data.js"></script>
+    <style>
+      *, *::before, *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      html, body {
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+        background-color: #0f172a;
+        color: #ffffff;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .stage-root {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background-color: #0f172a;
+      }
+
+      .backdrop-layer {
+        position: fixed;
+        inset: 0;
+        background-size: cover;
+        background-position: center center;
+        background-repeat: no-repeat;
+        z-index: 1;
+      }
+
+      .scrim-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      @keyframes slideReveal {
+        from {
+          opacity: 0;
+          transform: scale(0.98);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      .reveal-anim {
+        animation: slideReveal 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .reveal-anim {
+          animation: none;
+        }
+      }
+
+      /* AGENDA SCREEN */
+      .agenda-fit-shell {
+        position: relative;
+        z-index: 10;
+        flex-shrink: 0;
+        width: min(92vw, 560px);
+        transform-origin: center center;
+        transition: transform 0.14s ease-out;
+      }
+
+      .agenda-fit-shell.hidden {
+        display: none;
+      }
+
+      .agenda-card {
+        width: 100%;
+        text-align: center;
+        overflow: hidden;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1.5px solid rgba(255, 255, 255, 0.32);
+        border-radius: 18px;
+        padding: 22px 36px;
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.52);
+      }
+
+      .agenda-logo {
+        width: 44px;
+        height: 44px;
+        margin: 0 auto 8px auto;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        display: block;
+      }
+
+      .agenda-logo.hidden {
+        display: none;
+      }
+
+      .main-title {
+        font-size: clamp(1.45rem, 2.7vw, 2rem);
+        font-weight: 800;
+        line-height: 1.22;
+        white-space: pre-line;
+        text-wrap: balance;
+        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.72);
+        margin-bottom: 6px;
+      }
+
+      .main-title.no-subtitle {
+        margin-bottom: 14px;
+      }
+
+      .subtitle {
+        color: rgba(226, 232, 240, 0.95);
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 14px;
+        text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
+      }
+
+      .subtitle.hidden {
+        display: none;
+      }
+
+      .agenda-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .agenda-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        color: #ffffff;
+        font-family: inherit;
+        font-size: 1.08rem;
+        font-weight: 700;
+        line-height: 1.3;
+        padding: 5px 16px;
+        cursor: pointer;
+        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+        transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+      }
+
+      .agenda-btn:hover,
+      .agenda-btn:focus-visible {
+        background-color: var(--accent-hover-bg);
+        border-color: var(--accent-hover-border);
+        color: var(--accent-color);
+        transform: scale(1.02);
+        outline: none;
+      }
+
+      .event-date {
+        margin-top: 14px;
+        color: #e2e8f0;
+        font-size: 0.98rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        font-variant-numeric: tabular-nums;
+        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
+      }
+
+      .event-date.hidden {
+        display: none;
+      }
+
+      /* SLIDE SCREEN */
+      .slide-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .slide-screen.active {
+        display: flex;
+      }
+
+      .back-btn {
+        position: fixed;
+        top: clamp(14px, 2.5vh, 24px);
+        right: clamp(14px, 2.5vw, 24px);
+        z-index: 30;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        color: #ffffff;
+        font-family: inherit;
+        font-size: clamp(0.82rem, 1.35vw, 0.95rem);
+        font-weight: 700;
+        padding: 7px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+      }
+
+      .back-btn:hover,
+      .back-btn:focus-visible {
+        background-color: var(--accent-color);
+        border-color: var(--accent-color);
+        color: #0f172a;
+        outline: none;
+      }
+
+      .slide-fit-shell {
+        position: relative;
+        z-index: 25;
+        flex-shrink: 0;
+        text-align: center;
+        transform-origin: center center;
+        transition: transform 0.14s ease-out;
+      }
+
+      .slide-title {
+        color: #ffffff;
+        font-size: clamp(1.6rem, 3.8vw, 2.8rem);
+        font-weight: 800;
+        line-height: 1.26;
+        margin-bottom: clamp(16px, 2.6vh, 26px);
+        text-shadow: 0 3px 16px rgba(0, 0, 0, 0.92), 0 0 28px rgba(0, 0, 0, 0.65);
+        text-wrap: balance;
+      }
+
+      .slide-text-only-box {
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        padding: clamp(22px, 3.8vw, 38px) clamp(24px, 4.2vw, 44px);
+        text-align: left;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.48);
+      }
+
+      .slide-media-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 24px;
+        align-items: stretch;
+      }
+
+      @media (min-width: 960px) {
+        .slide-media-grid.layout-media-left.has-text {
+          grid-template-columns: 7fr 5fr;
+        }
+        .slide-media-grid.layout-media-right.has-text {
+          grid-template-columns: 5fr 7fr;
+        }
+      }
+
+      .slide-media-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        align-items: stretch;
+      }
+
+      .slide-media-stack .slide-media-frame {
+        max-height: 46dvh;
+        width: 100%;
+      }
+
+      .slide-media-only-frame {
+        max-width: 960px;
+        margin: 0 auto;
+        width: 100%;
+      }
+
+      .slide-media-only-frame .slide-media-frame {
+        max-height: 68dvh;
+      }
+
+      .slide-bg-media-layer {
+        position: fixed;
+        inset: 0;
+        z-index: 21;
+        overflow: hidden;
+        pointer-events: none;
+        display: none;
+      }
+
+      .slide-bg-media-layer.active {
+        display: block;
+      }
+
+      .slide-bg-media-layer img,
+      .slide-bg-media-layer video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .slide-bg-media-scrim {
+        position: fixed;
+        inset: 0;
+        z-index: 22;
+        background: rgba(8, 13, 24, 0.42);
+        pointer-events: none;
+        display: none;
+      }
+
+      .slide-bg-media-scrim.active {
+        display: block;
+      }
+
+      .slide-media-frame {
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(2, 6, 23, 0.78);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+        aspect-ratio: 16 / 9;
+        max-height: 58dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .slide-media-frame img,
+      .slide-media-frame video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .slide-media-frame.fit-contain img,
+      .slide-media-frame.fit-contain video {
+        object-fit: contain;
+      }
+
+      .media-fallback {
+        width: 100%;
+        height: 100%;
+        min-height: 220px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 24px;
+        color: #94a3b8;
+        font-size: 0.92rem;
+        font-weight: 600;
+        text-align: center;
+      }
+
+      .slide-side-box {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        padding: clamp(20px, 3vw, 34px);
+        text-align: left;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.48);
+      }
+
+      .desc-blocks {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .desc-paragraph {
+        color: #ffffff;
+        font-size: clamp(1.05rem, 2.2vw, 1.52rem);
+        font-weight: 700;
+        line-height: 1.65;
+        white-space: pre-line;
+        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
+      }
+
+      .desc-bullets {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .desc-bullet-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        color: #ffffff;
+        font-size: clamp(1rem, 2.05vw, 1.4rem);
+        font-weight: 600;
+        line-height: 1.6;
+        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
+      }
+
+      .desc-bullet-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-top: 0.58em;
+      }
+
+      /* SLIDE STEPPER */
+      .slide-stepper {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .slide-stepper.hidden {
+        display: none;
+      }
+
+      .stepper-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.26);
+        background: rgba(15, 23, 42, 0.58);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color 0.15s ease, opacity 0.15s ease;
+      }
+
+      .stepper-btn:hover:not(:disabled) {
+        background: rgba(30, 41, 59, 0.88);
+      }
+
+      .stepper-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+
+      .stepper-counter {
+        padding: 0 6px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: rgba(226, 232, 240, 0.92);
+        font-variant-numeric: tabular-nums;
+        user-select: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage-root" id="stageRoot">
+      <div class="backdrop-layer" id="backdropLayer" aria-hidden="true"></div>
+      <div class="scrim-layer" id="scrimLayer" aria-hidden="true"></div>
+
+      <!-- MAIN AGENDA MENU -->
+      <div class="agenda-fit-shell" id="agendaFitShell">
+        <main class="agenda-card reveal-anim" id="agendaCard">
+          <img alt="Program Logo" referrerpolicy="no-referrer" class="agenda-logo hidden" id="agendaLogo" />
+          <h1 class="main-title" id="agendaTitle"></h1>
+          <p class="subtitle hidden" id="agendaSubtitle"></p>
+          <nav class="agenda-list" id="agendaList" aria-label="Event Agenda"></nav>
+          <div class="event-date hidden" id="agendaDate"></div>
+        </main>
+      </div>
+
+      <!-- INDIVIDUAL SLIDE VIEW -->
+      <section class="slide-screen" id="slideScreen" aria-label="Slide View">
+        <div class="slide-bg-media-layer" id="slideBgMediaLayer" aria-hidden="true"></div>
+        <div class="slide-bg-media-scrim" id="slideBgMediaScrim" aria-hidden="true"></div>
+        <button type="button" class="back-btn" id="backBtn" data-slide-interactive="true">Back</button>
+        <div class="slide-fit-shell" id="slideFitShell">
+          <h2 class="slide-title" id="slideTitle"></h2>
+          <div id="slideBodyContainer"></div>
+        </div>
+        <div class="slide-stepper hidden" id="slideStepper" data-slide-interactive="true">
+          <button type="button" class="stepper-btn" id="prevSlideBtn" aria-label="Previous slide">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <span class="stepper-counter" id="slideCounter">01 / 01</span>
+          <button type="button" class="stepper-btn" id="nextSlideBtn" aria-label="Next slide">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      (function () {
+        var STORAGE_KEY = 'green_leader_presentation_live_v1';
+        var ALLOWED_FONTS = [
+          'Noto Sans Sinhala',
+          'Plus Jakarta Sans',
+          'Outfit',
+          'Playfair Display'
+        ];
+        var ALLOWED_MEDIA = ['none', 'image', 'gif', 'video'];
+        var ALLOWED_LAYOUTS = ['media-left', 'media-right', 'media-top', 'media-bottom', 'media-bg', 'media-only'];
+        var ALLOWED_FITS = ['cover', 'contain'];
+
+        var FALLBACK_CONFIG = {
+          mainTitle: 'Green Leader\nProgram',
+          subtitle: 'National College of Education on Technology, Kuliyapitiya',
+          eventDate: '18.11.2026',
+          bgImage: './src/assets/images/green_leader_backdrop_1795205001817.jpg',
+          logoImage: './src/assets/images/green_leader_logo_1795205002373.jpg',
+          showLogo: true,
+          theme: {
+            accentColor: '#00E5FF',
+            cardOpacity: 0.54,
+            bgOverlayOpacity: 0.22,
+            fontFamily: 'Noto Sans Sinhala'
+          },
+          slides: [
+            {
+              id: 'slide-1',
+              menuTitle: 'Slide 1',
+              slideTitle: 'Slide 1',
+              description: '',
+              mediaType: 'none',
+              mediaUrl: '',
+              mediaLayout: 'media-left',
+              mediaFit: 'cover'
+            },
+            {
+              id: 'slide-2',
+              menuTitle: 'Slide 2',
+              slideTitle: 'Slide 2',
+              description: '',
+              mediaType: 'none',
+              mediaUrl: '',
+              mediaLayout: 'media-left',
+              mediaFit: 'cover'
+            }
+          ]
+        };
+
+        function resolveAssetPath(url) {
+          if (typeof url !== 'string') return '';
+          var trimmed = url.trim();
+          if (!trimmed) return '';
+          // Make root-relative /src/assets paths work seamlessly when opened via file://
+          if (window.location.protocol === 'file:' && trimmed.indexOf('/src/assets/') === 0) {
+            return '.' + trimmed;
+          }
+          return trimmed;
+        }
+
+        function clampNum(val, min, max, fallback) {
+          var n = Number(val);
+          if (isNaN(n)) return fallback;
+          return Math.min(max, Math.max(min, n));
+        }
+
+        function normalizeConfig(raw, base) {
+          var ref = base || FALLBACK_CONFIG;
+          if (!raw || typeof raw !== 'object') {
+            return JSON.parse(JSON.stringify(ref));
+          }
+          var rawTheme = raw.theme || ref.theme;
+          var fontFamily = ALLOWED_FONTS.indexOf(rawTheme.fontFamily) !== -1
+            ? rawTheme.fontFamily
+            : ref.theme.fontFamily;
+          var accentColor =
+            typeof rawTheme.accentColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(rawTheme.accentColor.trim())
+              ? rawTheme.accentColor.trim()
+              : ref.theme.accentColor;
+
+          var rawSlides = Array.isArray(raw.slides) ? raw.slides : ref.slides;
+          var slides = rawSlides.map(function (s, idx) {
+            var item = s || {};
+            return {
+              id: typeof item.id === 'string' && item.id.trim() ? item.id : 'slide-' + (idx + 1),
+              menuTitle: typeof item.menuTitle === 'string' ? item.menuTitle : 'Agenda Item ' + (idx + 1),
+              slideTitle: typeof item.slideTitle === 'string' ? item.slideTitle : 'Agenda Item ' + (idx + 1),
+              description: typeof item.description === 'string' ? item.description : '',
+              mediaType: ALLOWED_MEDIA.indexOf(item.mediaType) !== -1 ? item.mediaType : 'none',
+              mediaUrl: typeof item.mediaUrl === 'string' ? item.mediaUrl : '',
+              mediaLayout: ALLOWED_LAYOUTS.indexOf(item.mediaLayout) !== -1 ? item.mediaLayout : 'media-left',
+              mediaFit: ALLOWED_FITS.indexOf(item.mediaFit) !== -1 ? item.mediaFit : 'cover'
+            };
+          });
+
+          return {
+            mainTitle: typeof raw.mainTitle === 'string' ? raw.mainTitle : ref.mainTitle,
+            subtitle: typeof raw.subtitle === 'string' ? raw.subtitle : ref.subtitle,
+            eventDate: typeof raw.eventDate === 'string' ? raw.eventDate : ref.eventDate,
+            bgImage: typeof raw.bgImage === 'string' ? raw.bgImage : ref.bgImage,
+            logoImage: typeof raw.logoImage === 'string' ? raw.logoImage : ref.logoImage,
+            showLogo: typeof raw.showLogo === 'boolean' ? raw.showLogo : ref.showLogo,
+            theme: {
+              accentColor: accentColor,
+              cardOpacity: clampNum(rawTheme.cardOpacity, 0.25, 0.9, ref.theme.cardOpacity),
+              bgOverlayOpacity: clampNum(rawTheme.bgOverlayOpacity, 0, 0.8, ref.theme.bgOverlayOpacity),
+              fontFamily: fontFamily
+            },
+            slides: slides
+          };
+        }
+
+        function getDefaultConfig() {
+          return normalizeConfig(window.PRESENTATION_DATA, FALLBACK_CONFIG);
+        }
+
+        function loadConfig() {
+          var defaults = getDefaultConfig();
+          try {
+            var saved = window.localStorage.getItem(STORAGE_KEY);
+            if (!saved) return defaults;
+            return normalizeConfig(JSON.parse(saved), defaults);
+          } catch (err) {
+            return defaults;
+          }
+        }
+
+        function hexToRgba(hex, alpha) {
+          var cleaned = String(hex || '').replace('#', '').trim();
+          if (!/^[0-9a-fA-F]{6}$/.test(cleaned)) {
+            return 'rgba(0, 229, 255, ' + alpha + ')';
+          }
+          var r = parseInt(cleaned.slice(0, 2), 16);
+          var g = parseInt(cleaned.slice(2, 4), 16);
+          var b = parseInt(cleaned.slice(4, 6), 16);
+          return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
+        }
+
+        function getFontStack(fontFamily) {
+          if (fontFamily === 'Plus Jakarta Sans') {
+            return "'Plus Jakarta Sans', 'Noto Sans Sinhala', sans-serif";
+          }
+          if (fontFamily === 'Outfit') {
+            return "'Outfit', 'Noto Sans Sinhala', sans-serif";
+          }
+          if (fontFamily === 'Playfair Display') {
+            return "'Playfair Display', 'Noto Sans Sinhala', serif";
+          }
+          return "'Noto Sans Sinhala', 'Plus Jakarta Sans', sans-serif";
+        }
+
+        function buildDescriptionNode(text, accentColor) {
+          var lines = String(text || '').split('\n');
+          var blocks = [];
+          for (var i = 0; i < lines.length; i++) {
+            var rawLine = lines[i];
+            var trimmed = rawLine.trim();
+            if (!trimmed) continue;
+            var match = trimmed.match(/^[-*•]\s+(.*)$/);
+            if (match) {
+              var lastB = blocks[blocks.length - 1];
+              if (lastB && lastB.type === 'bullets') {
+                lastB.items.push(match[1]);
+              } else {
+                blocks.push({ type: 'bullets', items: [match[1]] });
+              }
+            } else {
+              var lastP = blocks[blocks.length - 1];
+              if (lastP && lastP.type === 'paragraph') {
+                lastP.lines.push(rawLine);
+              } else {
+                blocks.push({ type: 'paragraph', lines: [rawLine] });
+              }
+            }
+          }
+
+          var container = document.createElement('div');
+          container.className = 'desc-blocks';
+
+          blocks.forEach(function (block) {
+            if (block.type === 'bullets') {
+              var ul = document.createElement('ul');
+              ul.className = 'desc-bullets';
+              block.items.forEach(function (itemText) {
+                var li = document.createElement('li');
+                li.className = 'desc-bullet-item';
+
+                var dot = document.createElement('span');
+                dot.className = 'desc-bullet-dot';
+                dot.setAttribute('aria-hidden', 'true');
+                dot.style.backgroundColor = accentColor;
+
+                var span = document.createElement('span');
+                span.textContent = itemText;
+
+                li.appendChild(dot);
+                li.appendChild(span);
+                ul.appendChild(li);
+              });
+              container.appendChild(ul);
+            } else {
+              var p = document.createElement('p');
+              p.className = 'desc-paragraph';
+              p.textContent = block.lines.join('\n');
+              container.appendChild(p);
+            }
+          });
+
+          return container;
+        }
+
+        function buildMediaNode(slide) {
+          var frame = document.createElement('div');
+          frame.className = 'slide-media-frame' + (slide.mediaFit === 'contain' ? ' fit-contain' : '');
+          var url = resolveAssetPath(slide.mediaUrl);
+
+          function renderFallback(message) {
+            frame.innerHTML = '';
+            var fb = document.createElement('div');
+            fb.className = 'media-fallback';
+            fb.innerHTML =
+              '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>';
+            var msg = document.createElement('span');
+            msg.textContent = message;
+            fb.appendChild(msg);
+            frame.appendChild(fb);
+          }
+
+          if (!url) {
+            renderFallback('No media file path or URL provided.');
+            return frame;
+          }
+
+          if (slide.mediaType === 'video') {
+            var video = document.createElement('video');
+            video.src = url;
+            video.controls = true;
+            video.playsInline = true;
+            video.preload = 'metadata';
+            video.onloadedmetadata = updateViewportScaling;
+            video.onerror = function () {
+              renderFallback('Video could not be loaded. Check the file path or URL.');
+            };
+            frame.appendChild(video);
+          } else {
+            var img = document.createElement('img');
+            img.src = url;
+            img.alt = slide.slideTitle || 'Slide media';
+            img.referrerPolicy = 'no-referrer';
+            img.onload = updateViewportScaling;
+            img.onerror = function () {
+              renderFallback('Image could not be loaded. Check the file path or URL.');
+            };
+            frame.appendChild(img);
+          }
+
+          return frame;
+        }
+
+        // DOM References
+        var stageRoot = document.getElementById('stageRoot');
+        var backdropLayer = document.getElementById('backdropLayer');
+        var scrimLayer = document.getElementById('scrimLayer');
+        var agendaFitShell = document.getElementById('agendaFitShell');
+        var agendaCard = document.getElementById('agendaCard');
+        var agendaLogo = document.getElementById('agendaLogo');
+        var agendaTitle = document.getElementById('agendaTitle');
+        var agendaSubtitle = document.getElementById('agendaSubtitle');
+        var agendaList = document.getElementById('agendaList');
+        var agendaDate = document.getElementById('agendaDate');
+
+        var slideScreen = document.getElementById('slideScreen');
+        var slideBgMediaLayer = document.getElementById('slideBgMediaLayer');
+        var slideBgMediaScrim = document.getElementById('slideBgMediaScrim');
+        var backBtn = document.getElementById('backBtn');
+        var slideFitShell = document.getElementById('slideFitShell');
+        var slideTitleEl = document.getElementById('slideTitle');
+        var slideBodyContainer = document.getElementById('slideBodyContainer');
+        var slideStepper = document.getElementById('slideStepper');
+        var prevSlideBtn = document.getElementById('prevSlideBtn');
+        var nextSlideBtn = document.getElementById('nextSlideBtn');
+        var slideCounter = document.getElementById('slideCounter');
+
+        var currentConfig = loadConfig();
+        var activeSlideId = null;
+        var lastSerializedConfig = '';
+
+        function fitElementToViewport(el, padXRatio, padYRatio, maxScale) {
+          if (!el || el.classList.contains('hidden')) return;
+          var naturalW = el.offsetWidth;
+          var naturalH = el.offsetHeight;
+          if (!naturalW || !naturalH) return;
+
+          var vw = (window.visualViewport && window.visualViewport.width) || window.innerWidth;
+          var vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+
+          var padX = Math.max(24, vw * padXRatio * 2);
+          var padY = Math.max(24, vh * padYRatio * 2);
+          var availW = Math.max(120, vw - padX);
+          var availH = Math.max(120, vh - padY);
+
+          var scale = Math.min(maxScale, availW / naturalW, availH / naturalH);
+          el.style.transform = 'scale(' + scale.toFixed(4) + ')';
+        }
+
+        function updateViewportScaling() {
+          if (!activeSlideId) {
+            fitElementToViewport(agendaFitShell, 0.035, 0.035, 1.2);
+          } else {
+            fitElementToViewport(slideFitShell, 0.04, 0.075, 1);
+          }
+        }
+
+        function renderAgenda() {
+          var theme = currentConfig.theme;
+          var accent = theme.accentColor;
+
+          document.documentElement.style.setProperty('--accent-color', accent);
+          document.documentElement.style.setProperty('--accent-hover-bg', hexToRgba(accent, 0.2));
+          document.documentElement.style.setProperty('--accent-hover-border', hexToRgba(accent, 0.55));
+          stageRoot.style.fontFamily = getFontStack(theme.fontFamily);
+
+          var cleanTitle = currentConfig.mainTitle.replace(/\s+/g, ' ').trim();
+          if (cleanTitle) {
+            document.title = cleanTitle;
+          }
+
+          var bgUrl = resolveAssetPath(currentConfig.bgImage);
+          backdropLayer.style.backgroundImage = bgUrl ? 'url("' + bgUrl.replace(/"/g, '\\"') + '")' : 'none';
+          scrimLayer.style.backgroundColor = 'rgba(8, 13, 24, ' + theme.bgOverlayOpacity + ')';
+          agendaCard.style.backgroundColor = 'rgba(15, 23, 42, ' + theme.cardOpacity + ')';
+
+          var logoUrl = resolveAssetPath(currentConfig.logoImage);
+          if (currentConfig.showLogo && logoUrl) {
+            agendaLogo.src = logoUrl;
+            agendaLogo.classList.remove('hidden');
+            agendaLogo.onerror = function () {
+              agendaLogo.classList.add('hidden');
+            };
+          } else {
+            agendaLogo.classList.add('hidden');
+          }
+
+          agendaTitle.textContent = currentConfig.mainTitle;
+          agendaTitle.style.color = accent;
+
+          if (currentConfig.subtitle && currentConfig.subtitle.trim()) {
+            agendaSubtitle.textContent = currentConfig.subtitle;
+            agendaSubtitle.classList.remove('hidden');
+            agendaTitle.classList.remove('no-subtitle');
+          } else {
+            agendaSubtitle.classList.add('hidden');
+            agendaTitle.classList.add('no-subtitle');
+          }
+
+          agendaList.innerHTML = '';
+          currentConfig.slides.forEach(function (slide) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'agenda-btn';
+            btn.textContent = slide.menuTitle;
+            btn.addEventListener('click', function () {
+              openSlideById(slide.id);
+            });
+            agendaList.appendChild(btn);
+          });
+
+          if (currentConfig.eventDate && currentConfig.eventDate.trim()) {
+            agendaDate.textContent = currentConfig.eventDate;
+            agendaDate.classList.remove('hidden');
+          } else {
+            agendaDate.classList.add('hidden');
+          }
+        }
+
+        function getActiveSlideIndex() {
+          if (!activeSlideId) return -1;
+          for (var i = 0; i < currentConfig.slides.length; i++) {
+            if (currentConfig.slides[i].id === activeSlideId) return i;
+          }
+          return -1;
+        }
+
+        function clearSlideBgMedia() {
+          var bgVid = slideBgMediaLayer.querySelector('video');
+          if (bgVid && typeof bgVid.pause === 'function') bgVid.pause();
+          slideBgMediaLayer.innerHTML = '';
+          slideBgMediaLayer.classList.remove('active');
+          slideBgMediaScrim.classList.remove('active');
+        }
+
+        function renderActiveSlide() {
+          clearSlideBgMedia();
+
+          var idx = getActiveSlideIndex();
+          if (idx === -1) {
+            activeSlideId = null;
+            slideScreen.classList.remove('active');
+            agendaFitShell.classList.remove('hidden');
+            requestAnimationFrame(updateViewportScaling);
+            return;
+          }
+
+          var slide = currentConfig.slides[idx];
+          var theme = currentConfig.theme;
+          var hasMedia = slide.mediaType !== 'none' && Boolean(slide.mediaUrl && slide.mediaUrl.trim());
+          var layout = slide.mediaLayout || 'media-left';
+          var hasText = Boolean(slide.description && slide.description.trim()) && layout !== 'media-only';
+
+          agendaFitShell.classList.add('hidden');
+          slideScreen.classList.add('active');
+          slideTitleEl.textContent = slide.slideTitle;
+          slideBodyContainer.innerHTML = '';
+
+          if (hasMedia && layout === 'media-bg') {
+            var bgAssetUrl = resolveAssetPath(slide.mediaUrl);
+            if (slide.mediaType === 'video') {
+              var bgVideo = document.createElement('video');
+              bgVideo.src = bgAssetUrl;
+              bgVideo.autoplay = true;
+              bgVideo.loop = true;
+              bgVideo.muted = true;
+              bgVideo.playsInline = true;
+              bgVideo.style.objectFit = slide.mediaFit === 'contain' ? 'contain' : 'cover';
+              slideBgMediaLayer.appendChild(bgVideo);
+            } else {
+              var bgImg = document.createElement('img');
+              bgImg.src = bgAssetUrl;
+              bgImg.alt = slide.slideTitle || 'Slide background';
+              bgImg.referrerPolicy = 'no-referrer';
+              bgImg.style.objectFit = slide.mediaFit === 'contain' ? 'contain' : 'cover';
+              slideBgMediaLayer.appendChild(bgImg);
+            }
+            slideBgMediaLayer.classList.add('active');
+            slideBgMediaScrim.classList.add('active');
+
+            slideFitShell.style.width = 'min(86vw, 780px)';
+            if (hasText) {
+              var bgTextBox = document.createElement('div');
+              bgTextBox.className = 'slide-text-only-box';
+              bgTextBox.setAttribute('data-slide-interactive', 'true');
+              bgTextBox.style.backgroundColor =
+                'rgba(10, 15, 24, ' + Math.min(0.84, theme.cardOpacity + 0.14) + ')';
+              bgTextBox.appendChild(buildDescriptionNode(slide.description, theme.accentColor));
+              slideBodyContainer.appendChild(bgTextBox);
+            }
+          } else if (hasMedia && layout === 'media-only') {
+            slideFitShell.style.width = 'min(90vw, 980px)';
+            var onlyWrap = document.createElement('div');
+            onlyWrap.className = 'slide-media-only-frame';
+            onlyWrap.setAttribute('data-slide-interactive', 'true');
+            onlyWrap.appendChild(buildMediaNode(slide));
+            slideBodyContainer.appendChild(onlyWrap);
+          } else if (hasMedia && (layout === 'media-top' || layout === 'media-bottom')) {
+            slideFitShell.style.width = 'min(88vw, 880px)';
+            var stack = document.createElement('div');
+            stack.className = 'slide-media-stack';
+            stack.setAttribute('data-slide-interactive', 'true');
+
+            var stackMedia = buildMediaNode(slide);
+            var stackText = null;
+            if (hasText) {
+              stackText = document.createElement('div');
+              stackText.className = 'slide-text-only-box';
+              stackText.style.backgroundColor =
+                'rgba(10, 15, 24, ' + Math.min(0.84, theme.cardOpacity + 0.12) + ')';
+              stackText.appendChild(buildDescriptionNode(slide.description, theme.accentColor));
+            }
+
+            if (layout === 'media-top') {
+              stack.appendChild(stackMedia);
+              if (stackText) stack.appendChild(stackText);
+            } else {
+              if (stackText) stack.appendChild(stackText);
+              stack.appendChild(stackMedia);
+            }
+
+            slideBodyContainer.appendChild(stack);
+          } else if (hasMedia) {
+            slideFitShell.style.width = 'min(90vw, 1120px)';
+            var grid = document.createElement('div');
+            grid.className =
+              'slide-media-grid layout-' + layout + (hasText ? ' has-text' : '');
+            grid.setAttribute('data-slide-interactive', 'true');
+            if (!hasText) {
+              grid.style.maxWidth = '860px';
+              grid.style.margin = '0 auto';
+            }
+
+            var mediaFrame = buildMediaNode(slide);
+            var sideBox = null;
+            if (hasText) {
+              sideBox = document.createElement('div');
+              sideBox.className = 'slide-side-box';
+              sideBox.style.backgroundColor =
+                'rgba(10, 15, 24, ' + Math.min(0.84, theme.cardOpacity + 0.14) + ')';
+              sideBox.appendChild(buildDescriptionNode(slide.description, theme.accentColor));
+            }
+
+            if (layout === 'media-right' && sideBox) {
+              grid.appendChild(sideBox);
+              grid.appendChild(mediaFrame);
+            } else {
+              grid.appendChild(mediaFrame);
+              if (sideBox) grid.appendChild(sideBox);
+            }
+
+            slideBodyContainer.appendChild(grid);
+          } else if (hasText) {
+            slideFitShell.style.width = 'min(86vw, 780px)';
+            var box = document.createElement('div');
+            box.className = 'slide-text-only-box';
+            box.setAttribute('data-slide-interactive', 'true');
+            box.style.backgroundColor =
+              'rgba(10, 15, 24, ' + Math.min(0.84, theme.cardOpacity + 0.1) + ')';
+            box.appendChild(buildDescriptionNode(slide.description, theme.accentColor));
+            slideBodyContainer.appendChild(box);
+          } else {
+            slideFitShell.style.width = 'min(86vw, 780px)';
+          }
+
+          if (currentConfig.slides.length > 1) {
+            slideStepper.classList.remove('hidden');
+            prevSlideBtn.disabled = idx <= 0;
+            nextSlideBtn.disabled = idx >= currentConfig.slides.length - 1;
+            slideCounter.textContent =
+              String(idx + 1).padStart(2, '0') + ' / ' + String(currentConfig.slides.length).padStart(2, '0');
+          } else {
+            slideStepper.classList.add('hidden');
+          }
+
+          requestAnimationFrame(updateViewportScaling);
+        }
+
+        function openSlideById(id) {
+          activeSlideId = id;
+          renderActiveSlide();
+        }
+
+        function returnToAgenda() {
+          clearSlideBgMedia();
+          // Pause any playing video when returning to agenda
+          var playingVideo = slideBodyContainer.querySelector('video');
+          if (playingVideo && typeof playingVideo.pause === 'function') {
+            playingVideo.pause();
+          }
+          activeSlideId = null;
+          slideScreen.classList.remove('active');
+          agendaFitShell.classList.remove('hidden');
+          requestAnimationFrame(updateViewportScaling);
+        }
+
+        function renderAll() {
+          lastSerializedConfig = JSON.stringify(currentConfig);
+          renderAgenda();
+          if (activeSlideId) {
+            renderActiveSlide();
+          } else {
+            agendaFitShell.classList.remove('hidden');
+            slideScreen.classList.remove('active');
+            requestAnimationFrame(updateViewportScaling);
+          }
+        }
+
+        function syncFromStorageIfChanged() {
+          var nextConfig = loadConfig();
+          var serialized = JSON.stringify(nextConfig);
+          if (serialized !== lastSerializedConfig) {
+            currentConfig = nextConfig;
+            renderAll();
+          }
+        }
+
+        // Event Listeners
+        backBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          returnToAgenda();
+        });
+
+        slideScreen.addEventListener('click', function (e) {
+          if (!e.target.closest('[data-slide-interactive="true"]')) {
+            returnToAgenda();
+          }
+        });
+
+        prevSlideBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var idx = getActiveSlideIndex();
+          if (idx > 0) openSlideById(currentConfig.slides[idx - 1].id);
+        });
+
+        nextSlideBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var idx = getActiveSlideIndex();
+          if (idx >= 0 && idx < currentConfig.slides.length - 1) {
+            openSlideById(currentConfig.slides[idx + 1].id);
+          }
+        });
+
+        document.addEventListener('keydown', function (e) {
+          if (!activeSlideId) return;
+          var idx = getActiveSlideIndex();
+          if (e.key === 'Escape') {
+            returnToAgenda();
+          } else if (e.key === 'ArrowRight' && idx >= 0 && idx < currentConfig.slides.length - 1) {
+            openSlideById(currentConfig.slides[idx + 1].id);
+          } else if (e.key === 'ArrowLeft' && idx > 0) {
+            openSlideById(currentConfig.slides[idx - 1].id);
+          }
+        });
+
+        // Live sync across tabs/windows when editor.html updates localStorage
+        window.addEventListener('storage', function (event) {
+          if (event.key === STORAGE_KEY || event.key === null) {
+            syncFromStorageIfChanged();
+          }
+        });
+
+        // Belt-and-suspenders sync when returning focus to the presentation tab
+        window.addEventListener('focus', syncFromStorageIfChanged);
+        document.addEventListener('visibilitychange', function () {
+          if (document.visibilityState === 'visible') {
+            syncFromStorageIfChanged();
+          }
+        });
+
+        // Viewport auto-fit listeners (handles window resize, fullscreen, zoom, and web fonts)
+        window.addEventListener('resize', updateViewportScaling);
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', updateViewportScaling);
+        }
+        if (typeof ResizeObserver !== 'undefined') {
+          var ro = new ResizeObserver(updateViewportScaling);
+          ro.observe(agendaFitShell);
+          ro.observe(slideFitShell);
+        }
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(updateViewportScaling).catch(function () {});
+        }
+
+        renderAll();
+      })();
+    </script>
+  </body>
+</html>
